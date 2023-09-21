@@ -1,0 +1,493 @@
+<html>
+
+<head>
+    <title>Professional basket in Spain</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <!--La connexió amb l'API de Mapbox-->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+
+</head>
+
+<body>
+
+    <!--Creem l'element Llegenda-->
+    <div id="legend-grapes" class="legend">
+        <h4>🏀Spanish Basketball teams - Season 2023-2024</h4>
+        <h4>🌍First & Second division (ACB and LEB Oro)</h4>
+
+        <a href="https://www.acb.com/">
+            <h5>💾Asociación de Clubes de Baloncesto Español fo 1st division (ACB)</h5>
+        </a>
+        <a href="https://www.feb.es/inicio.aspx">
+            <h5>💾Spanish Basketball Federation for 2nd division (LEB Oro) data</h5>
+        </a>
+        <a href="https://www.linkedin.com/in/%C3%A0lex-cubells-i-barrufet-08336413b/">
+            <h5>🤟🏼 © Àlex Cubells Barrufet</h5>
+        </a>
+    </div>
+
+
+    <!--Creem l'element DIVISION on anirà el nostre mapa-->
+    <nav id="menu"></nav>
+    <div id="map"></div>
+
+    <!--Afegim el nostre token d'accès a Mapbox-->
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleGFuZHJvc21hcHMiLCJhIjoiY2xtMDg5MTIzMzJsaTNkcHZmcGc5MXRiaiJ9.7LUzRkxe17ZbG_5lqI2tRg'
+
+        //Creem el nostre mapa
+        const map = new mapboxgl.Map({
+            container: 'map',
+            //Afegim l'estil de mapbox:
+            style: 'mapbox://styles/mapbox/dark-v11',
+            //El centrem a Spain
+            center: [-1.8196269536670213, 40.24098172736026],
+            zoom: 5.70
+
+        });
+
+        map.on('load', () => {
+
+            const images = [
+                                {
+                    name: 'barcelona',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/barcelona.png"
+                },
+                {
+                    name: 'baskonia',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/baskonia.png"
+                },
+                {
+                    name: 'girona',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/girona.png"
+                },
+                {
+                    name: 'manresa',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/manresa.png"
+                },
+                {
+                    name: 'zaragoza',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/zaragoza.png"
+                },
+                {
+                    name: 'granada',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/granada.png"
+                },
+                {
+                    name: 'gcanaria',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/gcanaria.png"
+                },
+                {
+                    name: 'badalona',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/badalona.png"
+                },
+                {
+                    name: 'tenerife',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/tenerife.png"
+                },
+                {
+                    name: 'compostela',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/compostela.png"
+                },
+                {
+                    name: 'andorra',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/andorra.png"
+                },
+                {
+                    name: 'madrid',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/madrid.png"
+                },
+                {
+                    name: 'lugo',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/lugo.png"
+                },
+                {
+                    name: 'bilbao',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/bilbao.png"
+                },
+                {
+                    name: 'murcia',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/murcia.png"
+                },
+                {
+                    name: 'malaga',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/malaga.png"
+                },
+                {
+                    name: 'valencia',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/valencia.png"
+                },
+                {
+                    name: 'palencia',
+                    url: "https://raw.githubusercontent.com/alexandrosmaps/Basketball-clubs-spain/main/img/palencia.png"
+                },
+
+                // Add more images as needed
+            ];
+            
+            // Load each image
+            images.forEach((image) => {
+                map.loadImage(image.url, (error, loadedImage) => {
+                    if (error) throw error;
+
+                    // Add the loaded image to the map
+                    map.addImage(image.name, loadedImage);
+
+                    // Check if all images are loaded before adding the source and layer
+                    if (images.every((img) => map.hasImage(img.name))) {
+                        addSourceAndLayer();
+                    }
+                });
+            });
+            
+
+            map.addSource('clubsbasket', {
+                'type': 'geojson',
+                'data': {
+                    "type": "FeatureCollection",
+                    "name": "clubs_spain",
+                    "crs": {
+                        "type": "name",
+                        "properties": {
+                            "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+                        }
+                    },
+                    "features": [
+                        
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "F.C.BARCELONA",
+                                "League": "ACB",
+                                "image": "barcelona"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    2.120089891211862,
+                                    41.380038919100883
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BASKONIA",
+                                "League": "ACB",
+                                "image": "baskonia"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -2.641672218061841,
+                                    42.864059803422784
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BÀSQUET GIRONA",
+                                "League": "ACB",
+                                "image": "girona"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    2.810775243031877,
+                                    41.990372563268757
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BÀSQUET MANRESA S.A.D.",
+                                "League": "ACB",
+                                "image": "manresa"
+
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    1.809536928579043,
+                                    41.72533707888946
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BASKET ZARAGOZA 2022 S.A.D.",
+                                "League": "ACB",
+                                "image": "zaragoza"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -0.866236656250504,
+                                    41.635351928293062
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "CLUB DEPORTIVO GRANADA POR EL BALONCESTO",
+                                "League": "ACB",
+                                "image": "granada"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -3.594091720062047,
+                                    37.153453424139578
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "CB GRAN CANARIA-CLARET SAD",
+                                "League": "ACB",
+                                "image": "gcanaria"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -15.456945663190263,
+                                    28.103016107332301
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "CLUB JOVENTUT BADALONA SAD",
+                                "League": "ACB",
+                                "image": "badalona"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    2.231941431144214,
+                                    41.442435430266315
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "CB 1939 CANARIAS SAD - TENERIFE",
+                                "League": "ACB",
+                                "image": "tenerife"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -16.296991251540536,
+                                    28.458380977883557
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "OBRADOIRO CLUB DE AMIGOS BALONCESTO SAD",
+                                "League": "ACB",
+                                "image": "compostela"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -8.530721055181385,
+                                    42.876197456499391
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BÀSQUET CLUB ANDORRA SAOE",
+                                "League": "ACB",
+                                "image": "andorra"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    1.516581130376438,
+                                    42.504873494134635
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "REAL MADRID",
+                                "League": "ACB",
+                                "image": "madrid"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -3.672435808224539,
+                                    40.423841934489481
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "C.B. BREOGAN SAD",
+                                "League": "ACB",
+                                "image": "lugo"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -7.545339532306948,
+                                    42.991244946318133
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "C.D. BASKET BILBAO BERRI SAD",
+                                "League": "ACB",
+                                "image": "bilbao"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -2.926072100003553,
+                                    43.252173361585285
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "UCAM MURCIA CLUB BALONCESTO SAD",
+                                "League": "ACB",
+                                "image": "murcia"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -1.112771186576787,
+                                    37.994005275957541
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "BALONCESTO MÁLAGA SAD",
+                                "League": "ACB",
+                                "image": "malaga"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -4.460557548829682,
+                                    36.682513901738197
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "VALENCIA BASKET CLUB SAD",
+                                "League": "ACB",
+                                "image": "valencia"
+
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -0.366074044743175,
+                                    39.451673357256247
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "properties": {
+                                "name": "CLUB DEPORTIVO MARISTAS - PALENCIA",
+                                "League": "ACB",
+                                "image": "palencia"
+                            },
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    -4.541811356915781,
+                                    42.014620120472948
+                                ]
+                            }
+                        }
+                    ]
+                }
+            });
+            map.addLayer({
+                'id': 'clubs',
+                'source': 'clubsbasket',
+                'type': 'symbol',
+                'layout': {
+                    'icon-size': 0.1,
+                    'icon-allow-overlap': true,
+                    'icon-image': ['get', 'image'] // Use the 'image' property from your data
+                },
+                'paint': {
+                    'text-color': 'black',
+                    'text-halo-color': 'white',
+                    'text-halo-width': 1
+                }
+            });
+
+            
+
+            //Creem esdeveniment quan es fa click
+            map.on('click', 'clubs', (e) => {
+                // Copy coordinates array.
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const name = e.features[0].properties.name;
+
+                // Ensure that if the map is zoomed out such that multiple
+                // copies of the feature are visible, the popup appears
+                // over the copy being pointed to.
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(name)
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the places layer.
+            map.on('mouseenter', 'clubs', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'clubs', () => {
+                map.getCanvas().style.cursor = '';
+            });
+
+
+
+        });
+
+        //Element per posar el mapa a pantalla completa
+        map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+        //Element per tenir el control del zoom + - i de navegació
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    </script>
+</body>
+
+</html>
